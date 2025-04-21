@@ -1,4 +1,4 @@
-name: Docker Build and Publish
+name: MERN Stack Docker Build and Publish
 
 on:
   push:
@@ -8,7 +8,6 @@ on:
 
 env:
   REGISTRY: docker.io
-  # Use explicit Docker Hub username instead of GitHub username
   DOCKERHUB_NAMESPACE: sheryarkayani
 
 jobs:
@@ -20,7 +19,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          # Full git history is needed to get a proper tag
           fetch-depth: 0
       
       - name: Set up QEMU
@@ -39,77 +37,36 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-management
+          images: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/social-media
           tags: |
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha
-      
-      # API Gateway
-      - name: Build and push API Gateway
+
+      # Server (Backend)
+      - name: Build and push Server
         uses: docker/build-push-action@v4
         with:
-          context: ./api-gateway
+          context: ./Server
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-api-gateway:latest,${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-api-gateway:${{ github.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/social-media-server:latest
+            ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/social-media-server:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Add caching to speed up builds
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-api-gateway:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-api-gateway:buildcache,mode=max
-      
-      # Menu Service
-      - name: Build and push Menu Service
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/social-media-server:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/social-media-server:buildcache,mode=max
+
+      # Client (Frontend)
+      - name: Build and push Client
         uses: docker/build-push-action@v4
         with:
-          context: ./menu-services
+          context: ./client
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-menu-service:latest,${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-menu-service:${{ github.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/social-media-client:latest
+            ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/social-media-client:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-menu-service:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-menu-service:buildcache,mode=max
-      
-      # Order Service
-      - name: Build and push Order Service
-        uses: docker/build-push-action@v4
-        with:
-          context: ./order-services
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-order-service:latest,${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-order-service:${{ github.sha }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-order-service:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-order-service:buildcache,mode=max
-      
-      # Customer Service
-      - name: Build and push Customer Service
-        uses: docker/build-push-action@v4
-        with:
-          context: ./customer-services
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-customer-service:latest,${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-customer-service:${{ github.sha }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-customer-service:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-customer-service:buildcache,mode=max
-      
-      # Inventory Service
-      - name: Build and push Inventory Service
-        uses: docker/build-push-action@v4
-        with:
-          context: ./inventory-services
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-inventory-service:latest,${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-inventory-service:${{ github.sha }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-inventory-service:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-inventory-service:buildcache,mode=max
-      
-      # Payment Service
-      - name: Build and push Payment Service
-        uses: docker/build-push-action@v4
-        with:
-          context: ./payment-services
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-payment-service:latest,${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-payment-service:${{ github.sha }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-payment-service:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/cafe-payment-service:buildcache,mode=max 
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/social-media-client:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/social-media-client:buildcache,mode=max
