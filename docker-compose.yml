@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  # MongoDB Service
+  mongodb:
+    image: mongo:latest
+    container_name: social-media-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - social-media-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Backend Service
+  server:
+    build: ./Server
+    container_name: social-media-server
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - MONGO_DB=mongodb://mongodb:27017/social-media-app
+      - JWT_KEY=mzDe+FPDZ09b+ANuGajoTcn+EhH3UrcA9QwXyGdqUxI=
+    depends_on:
+      - mongodb
+    volumes:
+      - ./Server/public:/app/public
+      - ./Server/images:/app/images
+    networks:
+      - social-media-network
+    restart: unless-stopped
+
+  # Frontend Service
+  client:
+    build: ./client
+    container_name: social-media-client
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+    networks:
+      - social-media-network
+    restart: unless-stopped
+
+networks:
+  social-media-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
